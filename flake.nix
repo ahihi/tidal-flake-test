@@ -12,46 +12,58 @@
   };
 
   outputs = { self, nixpkgs, darwin, tidal }: let
-    tidalSystem = system:
+    tidalModule = system: { config, pkgs, ... }:
       {
-        system = system;
-        modules = [
-          {
-            system.stateVersion = 5;
-            nixpkgs.overlays =
-              [
-                (final: prev:
-                  let
-                    tidal-ghc = final.haskellPackages.ghcWithPackages
-                      (p: [
-                        tidal.packages.${system}.tidal
-                      ]);
-                  in
-                    {
-                      tidal-ghc = tidal-ghc;
-                      tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
-                        ${tidal-ghc}/bin/ghci
-                      '';
-                    }
-                )
-              ];
-          }
-          ({ pkgs, config, ... }:
-            {
-              environment.systemPackages = [
-                pkgs.tidal-ghci
-              ];
-            }
-          )
+        nixpkgs.overlays =
+          [
+            (final: prev:
+              let
+                tidal-ghc = final.haskellPackages.ghcWithPackages
+                  (p: [
+                    tidal.packages.${system}.tidal
+                  ]);
+              in
+                {
+                  tidal-ghc = tidal-ghc;
+                  tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
+                    ${tidal-ghc}/bin/ghci
+                  '';
+                }
+            )
+          ];
+
+        environment.systemPackages = [
+          pkgs.tidal-ghci
         ];
       };
   in
     {
       darwinConfigurations = {
-        "darwinExample" = darwin.lib.darwinSystem (tidalSystem "x86_64-darwin");
+        "darwinExample" = darwin.lib.darwinSystem rec {
+          system = "x86_64-darwin";
+          modules = [
+            (tidalModule system)
+            # make darwin-rebuild happy
+            {
+              system.stateVersion = 5;
+            }
+          ];
+        };
       };
       nixosConfigurations = {
-        "nixosExample" = nixpkgs.lib.nixosSystem (tidalSystem "x86_64-linux");
+        "nixosExample" = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          modules = [
+            (tidalModule system)
+            # make nixos-rebuild happy
+            {
+              system.stateVersion = "24.11";
+              boot.loader.grub.enable = true;
+              boot.loader.grub.device = "/dev/sda";
+            }
+            ./nixosExample-hardware-configuration.nix
+          ];
+        };
       };
     };
 }
