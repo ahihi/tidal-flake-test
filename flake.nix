@@ -16,24 +16,16 @@
       {
         nixpkgs.overlays =
           [
-            (final: prev:
-              let
-                tidal-ghc = final.haskellPackages.ghcWithPackages
-                  (p: [
-                    tidal.packages.${system}.tidal
-                  ]);
-              in
-                {
-                  tidal-ghc = tidal-ghc;
-                  tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
-                    ${tidal-ghc}/bin/ghci
-                  '';
-                }
-            )
+            (final: prev: {
+              tidal-ghc = final.haskellPackages.ghcWithPackages
+                (p: [
+                  tidal.packages.${system}.tidal
+                ]);
+            })
           ];
 
         environment.systemPackages = [
-          pkgs.tidal-ghci
+          pkgs.tidal-ghc
         ];
       };
   in
