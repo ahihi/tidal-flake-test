@@ -9,11 +9,9 @@
 
     tidal.url = "github:tidalcycles/Tidal";
     tidal.inputs.nixpkgs.follows = "nixpkgs";
-
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, darwin, tidal, flake-utils }:
+  outputs = { self, nixpkgs, darwin, tidal }:
     let
       tidalOverlay = final: prev:
         let
@@ -55,21 +53,6 @@
           };
         };
         overlays.default = tidalOverlay;
-      } //
-      (flake-utils.lib.eachDefaultSystem (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [self.overlays.default];
-          };
-        in rec {
-          packages.default = pkgs.tidal-ghci;
-
-          devShell = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              packages.default
-            ];
-          };
-        }
-      ));
+        packages = tidal.packages;
+      };
 }
