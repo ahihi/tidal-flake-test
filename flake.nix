@@ -19,16 +19,11 @@
         let
           system = prev.stdenv.hostPlatform.system;
         in
-          {
-            tidal-ghc = final.haskellPackages.ghcWithPackages
-              (p: [
-                tidal.packages.${system}.tidal
-              ]);
-          };
+          tidal.packages.${system};
       tidalModule = system: { config, pkgs, ... }:
         {
           nixpkgs.overlays = [ tidalOverlay ];
-          environment.systemPackages = [ pkgs.tidal-ghc ];
+          environment.systemPackages = [ pkgs.tidal-ghci ];
         };
     in
       {
@@ -68,7 +63,7 @@
             overlays = [self.overlays.default];
           };
         in rec {
-          packages.default = pkgs.tidal-ghc;
+          packages.default = pkgs.tidal-ghci;
 
           devShell = pkgs.mkShell {
             buildInputs = with pkgs; [
